@@ -22,22 +22,21 @@
 
 # CELL ********************
 
-from pyspark.sql.types import StructType, StructField, StringType, LongType, ArrayType
+from pyspark.sql.types import StructType, StructField, StringType, DoubleType
 from pyspark.sql.functions import current_timestamp, input_file_name, regexp_extract
 
-schema = StructType([StructField('category', StringType(), True), 
-            StructField('datetime', LongType(), True), 
-            StructField('headline', StringType(), True), 
-            StructField('id', LongType(), True), 
-            StructField('image', StringType(), True), 
-            StructField('matched_symbols', ArrayType(StringType(), True), True), 
-            StructField('related', StringType(), True), 
+schema = StructType([StructField('description', StringType(), True), 
+            StructField('entity_match_score', DoubleType(), True), 
+            StructField('entity_sentiment_score', DoubleType(), True), 
+            StructField('marketaux_symbol', StringType(), True), 
+            StructField('published_date', StringType(), True), 
             StructField('source', StringType(), True), 
-            StructField('summary', StringType(), True), 
+            StructField('symbol', StringType(), True), 
+            StructField('title', StringType(), True), 
             StructField('url', StringType(), True)])
 
-SOURCE_PATH = 'Files/source/news'
-CHECKPOINT_PATH = 'Files/checkpoint/news/source_to_bronze'
+SOURCE_PATH = 'Files/source/sentiment'
+CHECKPOINT_PATH = 'Files/checkpoint/sentiment/source_to_bronze'
 
 # METADATA ********************
 
@@ -55,8 +54,8 @@ df = (
         .json(SOURCE_PATH)
 )
 
-df = df.withColumn('_ingestion_at', current_timestamp())\
-        .withColumn('_from_source', regexp_extract(input_file_name(), r"(Files/.*)", 1))
+df.withColumn('_ingestion_at', current_timestamp())\
+    .withColumn('_from_source', regexp_extract(input_file_name(), r"(Files/.*)", 1))
 
 query = (
     df.writeStream
@@ -64,7 +63,7 @@ query = (
         .outputMode('append')
         .option('checkpointLocation', CHECKPOINT_PATH)
         .trigger(availableNow=True)
-        .start('Tables/bronze/news')
+        .start('Tables/bronze/senttiment')
 )
 
 query.awaitTermination()
